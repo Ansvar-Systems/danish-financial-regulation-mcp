@@ -90,18 +90,20 @@ npx @ansvar/danish-financial-regulation-mcp
 
 ---
 
-## Available Tools (6)
+## Available Tools (8)
 
 | Tool | Description |
 |------|-------------|
-| `dk_fin_search_regulations` | Full-text search across Finanstilsynet regulatory provisions. Returns matching bekendtgorelser (executive orders), ve... |
-| `dk_fin_get_regulation` | Get a specific Finanstilsynet provision by sourcebook and reference. Accepts references like |
-| `dk_fin_list_sourcebooks` | List all Finanstilsynet regulatory sourcebooks with their names and descriptions. |
-| `dk_fin_search_enforcement` | Search Finanstilsynet enforcement actions — administrative orders, fines, licence revocations, and public statements ... |
-| `dk_fin_check_currency` | Check whether a specific Finanstilsynet provision reference is currently in force. Returns status and effective date. |
-| `dk_fin_about` | Return metadata about this MCP server: version, data source, tool list. |
+| `dk_fin_search_regulations` | Full-text search across Finanstilsynet regulatory provisions (bekendtgørelser, vejledninger, retningslinjer). |
+| `dk_fin_get_regulation` | Get a specific Finanstilsynet provision by sourcebook and reference (e.g., `BEK nr 1242 af 17/11/2017`). |
+| `dk_fin_list_sourcebooks` | List all Finanstilsynet regulatory sourcebooks with names and descriptions. |
+| `dk_fin_list_sources` | List all data sources with provenance metadata: URLs, coverage, license, provision counts. |
+| `dk_fin_check_data_freshness` | Check corpus statistics and data currency (provision counts, latest dates). |
+| `dk_fin_search_enforcement` | Search Finanstilsynet enforcement actions — fines, bans, licence revocations, warnings. |
+| `dk_fin_check_currency` | Check whether a specific provision reference is currently in force. |
+| `dk_fin_about` | Return server metadata: version, data source, tool list. |
 
-All tools return structured data with source references and timestamps.
+All tools return structured data including a `_meta` block with disclaimer, data age, copyright, and source URL. See [TOOLS.md](TOOLS.md) for full parameter documentation.
 
 ---
 
@@ -114,10 +116,11 @@ All content is sourced from official Danish regulatory publications:
 ### Data Currency
 
 - Database updates are periodic and may lag official publications
-- Freshness checks run via GitHub Actions workflows
-- Last-updated timestamps in tool responses indicate data age
+- Freshness checks run via the monthly GitHub Actions workflow (`check-updates.yml`)
+- All tool responses include a `_meta.data_age` field indicating data currency
+- Use `dk_fin_check_data_freshness` to query corpus statistics
 
-See `sources.yml` for full provenance metadata.
+See [COVERAGE.md](COVERAGE.md) for detailed coverage scope and known gaps.
 
 ---
 
@@ -167,21 +170,20 @@ git clone https://github.com/Ansvar-Systems/danish-financial-regulation-mcp
 cd danish-financial-regulation-mcp
 npm install
 npm run build
-npm test
 ```
 
 ### Running Locally
 
 ```bash
-npm run dev                                       # Start MCP server
-npx @anthropic/mcp-inspector node dist/index.js   # Test with MCP Inspector
+npm run dev                                       # Start MCP server (HTTP)
+npx @anthropic/mcp-inspector node dist/src/index.js   # Test with MCP Inspector
 ```
 
 ### Data Management
 
 ```bash
-npm run build:db       # Rebuild SQLite database from seed data
-npm run check-updates  # Check for new regulatory data
+npm run seed    # Seed sample data into the SQLite database
+npm run ingest  # Ingest latest data from finanstilsynet.dk
 ```
 
 ---
@@ -218,7 +220,7 @@ Apache License 2.0. See [LICENSE](./LICENSE) for details.
 
 ### Data Licenses
 
-Regulatory data sourced from official government publications. See `sources.yml` for per-source licensing details.
+Regulatory data sourced from official Finanstilsynet publications. See [COVERAGE.md](COVERAGE.md) for per-source details.
 
 ---
 
