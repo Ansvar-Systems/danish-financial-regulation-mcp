@@ -1,0 +1,58 @@
+# =============================================================================
+# Monthly Data Freshness Check
+# =============================================================================
+#
+# Runs on the first day of each month to remind maintainers to refresh the
+# Finanstilsynet corpus. Opens a GitHub issue if the workflow runs successfully
+# so the team is aware a manual ingest may be needed.
+#
+# To actually refresh the data:
+#   npm run ingest   -- pulls latest publications from finanstilsynet.dk
+#
+# =============================================================================
+
+name: Monthly Data Freshness Check
+
+on:
+  schedule:
+    # First day of every month at 08:00 UTC
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-freshness:
+    name: Check Data Freshness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Report freshness reminder
+        run: |
+          echo "## Data Freshness Reminder" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Monthly check triggered on $(date -u +%Y-%m-%d)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run \`npm run ingest\` locally to refresh the Finanstilsynet corpus, then rebuild and push." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Sources:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bekendtgørelser: https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Bekendtgorelser" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Vejledninger: https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Vejledninger" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Retningslinjer: https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Retningslinjer" >> "$GITHUB_STEP_SUMMARY"
