@@ -22,10 +22,12 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import {
   listSourcebooks,
+  listSources,
   searchProvisions,
   getProvision,
   searchEnforcement,
   checkProvisionCurrency,
+  checkDataFreshness,
 } from "./db.js";
 import { buildCitation } from "./citation.js";
 
@@ -152,6 +154,26 @@ const TOOLS = [
       required: [],
     },
   },
+  {
+    name: "dk_fin_list_sources",
+    description:
+      "List all data sources used by this server with provenance metadata: source URLs, coverage scope, update frequency, license, and provision counts per sourcebook.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "dk_fin_check_data_freshness",
+    description:
+      "Check data freshness and corpus statistics: total provision and enforcement counts, latest provision date, and staleness notes. Use before citing to understand data currency.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 // --- Zod schemas for argument validation ---
@@ -178,12 +200,28 @@ const CheckCurrencyArgs = z.object({
   reference: z.string().min(1),
 });
 
+// --- Meta block (golden standard) ---
+
+const META = {
+  disclaimer:
+    "Regulatory data is provided for research purposes only. Not legal or regulatory advice. Verify all references against primary sources at finanstilsynet.dk before making compliance decisions.",
+  data_age:
+    "Data is periodically updated from official Finanstilsynet publications and may lag by days or weeks. Use dk_fin_check_data_freshness to check corpus currency.",
+  copyright:
+    "Regulatory data © Finanstilsynet (Danish Financial Supervisory Authority). Sourced from official public regulatory publications.",
+  source_url: "https://www.finanstilsynet.dk/",
+};
+
 // --- Helper ---
 
 function textContent(data: unknown) {
+  const payload =
+    typeof data === "object" && data !== null
+      ? { ...(data as object), _meta: META }
+      : { data, _meta: META };
   return {
     content: [
-      { type: "text" as const, text: JSON.stringify(data, null, 2) },
+      { type: "text" as const, text: JSON.stringify(payload, null, 2) },
     ],
   };
 }
@@ -273,6 +311,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           data_source: "Finanstilsynet regulatory publications (https://www.finanstilsynet.dk/)",
           tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
         });
+      }
+
+      case "dk_fin_list_sources": {
+        const sources = listSources();
+        return textContent({ sources, count: sources.length });
+      }
+
+      case "dk_fin_check_data_freshness": {
+        const freshness = checkDataFreshness();
+        return textContent(freshness);
       }
 
       default:

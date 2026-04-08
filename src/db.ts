@@ -252,6 +252,88 @@ export function checkProvisionCurrency(reference: string): {
   return { ...row, found: true };
 }
 
+// --- list_sources / check_data_freshness ---
+
+export interface Source {
+  id: string;
+  name: string;
+  description: string | null;
+  source_url: string;
+  coverage: string;
+  update_frequency: string;
+  license: string;
+  provision_count: number;
+}
+
+const SOURCEBOOK_URLS: Record<string, string> = {
+  FTNET_BEKENDTGORELSER:
+    "https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Bekendtgorelser",
+  FTNET_VEJLEDNINGER:
+    "https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Vejledninger",
+  FTNET_RETNINGSLINJER:
+    "https://www.finanstilsynet.dk/Regler-og-praksis/Regler/Retningslinjer",
+};
+
+export function listSources(): Source[] {
+  const db = getDb();
+  const sourcebooks = db
+    .prepare("SELECT id, name, description FROM sourcebooks ORDER BY id")
+    .all() as Sourcebook[];
+
+  return sourcebooks.map((s) => {
+    const { count } = db
+      .prepare("SELECT COUNT(*) as count FROM provisions WHERE sourcebook_id = ?")
+      .get(s.id) as { count: number };
+    return {
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      source_url: SOURCEBOOK_URLS[s.id] ?? "https://www.finanstilsynet.dk/",
+      coverage: "Finanstilsynet official regulatory publications (Denmark)",
+      update_frequency: "Periodic — re-run ingest script to pull latest publications",
+      license: "Public regulatory data — Finanstilsynet open data",
+      provision_count: count,
+    };
+  });
+}
+
+export interface DataFreshness {
+  provision_count: number;
+  enforcement_count: number;
+  sourcebook_count: number;
+  latest_provision_date: string | null;
+  latest_enforcement_date: string | null;
+  note: string;
+}
+
+export function checkDataFreshness(): DataFreshness {
+  const db = getDb();
+  const { provision_count } = db
+    .prepare("SELECT COUNT(*) as provision_count FROM provisions")
+    .get() as { provision_count: number };
+  const { enforcement_count } = db
+    .prepare("SELECT COUNT(*) as enforcement_count FROM enforcement_actions")
+    .get() as { enforcement_count: number };
+  const { sourcebook_count } = db
+    .prepare("SELECT COUNT(*) as sourcebook_count FROM sourcebooks")
+    .get() as { sourcebook_count: number };
+  const { d: latest_provision_date } = db
+    .prepare("SELECT MAX(effective_date) as d FROM provisions")
+    .get() as { d: string | null };
+  const { d: latest_enforcement_date } = db
+    .prepare("SELECT MAX(date) as d FROM enforcement_actions")
+    .get() as { d: string | null };
+
+  return {
+    provision_count,
+    enforcement_count,
+    sourcebook_count,
+    latest_provision_date,
+    latest_enforcement_date,
+    note: "Data is updated periodically from official Finanstilsynet publications. To refresh, re-run the ingest script (npm run ingest). Verify critical references at finanstilsynet.dk.",
+  };
+}
+
 // --- Enforcement queries ---
 
 export interface SearchEnforcementOptions {
