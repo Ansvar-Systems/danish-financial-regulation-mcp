@@ -81,7 +81,7 @@ jobs:
         run: |
           # If the Dockerfile doesn't COPY a .db file, the image builds the DB
           # itself (Cypriot's two-image pattern, etc.) — nothing to do here.
-          DB_FILES=$(grep -oP 'COPY\s+\K(data/\S+\.db)' Dockerfile 2>/dev/null || true)
+          DB_FILES=$(grep -oP 'COPY\s+(?:--\S+\s+)*\Kdata/\S+\.db' Dockerfile 2>/dev/null || true)
           if [ -z "$DB_FILES" ]; then
             echo "No data/*.db file referenced in Dockerfile COPY — DB built inside image. Skipping provisioning."
             exit 0
