@@ -2,11 +2,11 @@
   "name": "@ansvar/danish-financial-regulation-mcp",
   "version": "1.0.0",
   "mcpName": "eu.ansvar/danish-financial-regulation-mcp",
-  "description": "Finanstilsynet (Danish FSA) financial regulation MCP server — bekendtgørelser, vejledninger, retningslinjer, and enforcement actions",
+  "description": "Finanstilsynet (Danish FSA) financial regulation MCP server \u2014 bekendtg\u00f8relser, vejledninger, retningslinjer, and enforcement actions",
   "type": "module",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "bin": {
-    "danish-financial-regulation-mcp": "dist/src/index.js"
+    "danish-financial-regulation-mcp": "dist/index.js"
   },
   "files": [
     "dist",
@@ -40,12 +40,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/http-server.ts",
-    "start": "node dist/src/http-server.js",
+    "start": "node dist/http-server.js",
     "seed": "npx tsx scripts/seed-sample.ts",
-    "ingest": "npx tsx scripts/ingest-finanstilsynet.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "tsc --noEmit",
-    "test": "tsc --noEmit -p tsconfig.json"
+    "test": "tsc --noEmit -p tsconfig.json",
+    "test:contract": "echo \"No contract tests yet\" && exit 0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

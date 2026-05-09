@@ -268,7 +268,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             `Provision not found: ${parsed.sourcebook} ${parsed.reference}`,
           );
         }
-        const prov = provision as Record<string, unknown>;
+        const prov = provision as unknown as Record<string, unknown>;
         return textContent({
           ...prov,
           _citation: buildCitation(
